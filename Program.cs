@@ -14,7 +14,13 @@ var host = Host.CreateDefaultBuilder(args)
     {
         logging.ClearProviders();
         logging.AddConfiguration(context.Configuration.GetSection("Logging"));
-        logging.AddConsole();
+        logging.AddSimpleConsole(options =>
+        {
+            options.IncludeScopes = true;
+            options.SingleLine = true;
+            options.TimestampFormat = "HH:mm:ss ";
+            options.UseUtcTimestamp = false;
+        });
     })
     .ConfigureServices((hostContext, services) =>
     {
