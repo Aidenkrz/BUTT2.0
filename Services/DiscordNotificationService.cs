@@ -19,7 +19,7 @@ public class DiscordNotificationService
     {
         if (string.IsNullOrWhiteSpace(serverConfig.DiscordWebhookUrl))
         {
-            _logger.LogDebug("[{ServerName}] Discord webhook URL is not configured. Skipping notification.", serverConfig.Name);
+            _logger.LogDebug("Discord webhook URL is not configured. Skipping notification.");
             return;
         }
 
@@ -27,7 +27,7 @@ public class DiscordNotificationService
         if (!Uri.TryCreate(serverConfig.DiscordWebhookUrl, UriKind.Absolute, out var webhookUri) ||
             !(webhookUri.Scheme == Uri.UriSchemeHttp || webhookUri.Scheme == Uri.UriSchemeHttps))
         {
-            _logger.LogWarning("[{ServerName}] Invalid Discord webhook URL format: {WebhookUrl}", serverConfig.Name, serverConfig.DiscordWebhookUrl);
+            _logger.LogWarning("Invalid Discord webhook URL format: {WebhookUrl}", serverConfig.DiscordWebhookUrl);
             return;
         }
 
@@ -36,7 +36,7 @@ public class DiscordNotificationService
         var message = serverConfig.DiscordUpdateMessage.Replace("{ServerName}", serverConfig.Name);
         var payload = new DiscordWebhookPayload { Content = message };
 
-        _logger.LogInformation("[{ServerName}] Sending Discord notification to webhook.", serverConfig.Name);
+        _logger.LogInformation("Sending Discord notification to webhook.");
 
         try
         {
@@ -45,18 +45,17 @@ public class DiscordNotificationService
 
             if (response.IsSuccessStatusCode)
             {
-                _logger.LogInformation("[{ServerName}] Discord notification sent successfully.", serverConfig.Name);
+                _logger.LogInformation("Discord notification sent successfully.");
             }
             else
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("[{ServerName}] Failed to send Discord notification. Status: {StatusCode}. Response: {ErrorContent}",
-                    serverConfig.Name, response.StatusCode, errorContent);
+                _logger.LogError("Failed to send Discord notification. Status: {StatusCode}. Response: {ErrorContent}", response.StatusCode, errorContent);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ServerName}] Error sending Discord notification.", serverConfig.Name);
+            _logger.LogError(ex, "Error sending Discord notification.");
         }
     }
 }

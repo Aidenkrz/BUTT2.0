@@ -18,7 +18,7 @@ public class Ss14ApiService
     public async Task<ManifestData?> FetchManifestDataAsync(ServerConfig serverConfig, CancellationToken cancellationToken)
     {
         var client = _httpClientFactory.CreateClient("Ss14Api");
-        _logger.LogDebug("[{ServerName}] Fetching manifest data from: {Url}", serverConfig.Name, serverConfig.ManifestUrl);
+        _logger.LogDebug("Fetching manifest data from: {Url}", serverConfig.ManifestUrl);
 
         try
         {
@@ -27,24 +27,23 @@ public class Ss14ApiService
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("[{ServerName}] Failed to fetch manifest data. Status: {StatusCode}. Response: {ErrorContent}",
-                    serverConfig.Name, response.StatusCode, errorContent);
+                _logger.LogError("Failed to fetch manifest data. Status: {StatusCode}. Response: {ErrorContent}", response.StatusCode, errorContent);
                 return null;
             }
 
             var manifestData = await response.Content.ReadFromJsonAsync<ManifestData>(cancellationToken: cancellationToken);
             if (manifestData == null || manifestData.Builds == null || !manifestData.Builds.Any())
             {
-                _logger.LogWarning("[{ServerName}] Manifest data fetched successfully but was empty or invalid.", serverConfig.Name);
+                _logger.LogWarning("Manifest data fetched successfully but was empty or invalid.");
                 return null;
             }
 
-            _logger.LogInformation("[{ServerName}] Successfully fetched manifest data.", serverConfig.Name);
+            _logger.LogInformation("Successfully fetched manifest data.");
             return manifestData;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ServerName}] Error fetching manifest data.", serverConfig.Name);
+            _logger.LogError(ex, "Error fetching manifest data.");
             return null;
         }
     }
@@ -53,7 +52,7 @@ public class Ss14ApiService
     {
         var client = _httpClientFactory.CreateClient("Ss14Api");
         var url = serverConfig.GetServerApiUrl("info");
-        _logger.LogDebug("[{ServerName}] Fetching current build version from: {Url}", serverConfig.Name, url);
+        _logger.LogDebug("Fetching current build version from: {Url}", url);
 
         try
         {
@@ -62,29 +61,28 @@ public class Ss14ApiService
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("[{ServerName}] Failed to fetch server info. Status: {StatusCode}. Response: {ErrorContent}. Is the server running?",
-                    serverConfig.Name, response.StatusCode, errorContent);
+                _logger.LogError("Failed to fetch server info. Status: {StatusCode}. Response: {ErrorContent}. Is the server running?", response.StatusCode, errorContent);
                 return null;
             }
 
             var serverInfo = await response.Content.ReadFromJsonAsync<ServerInfoData>(cancellationToken: cancellationToken);
             if (serverInfo?.Build == null || string.IsNullOrEmpty(serverInfo.Build.Version))
             {
-                _logger.LogWarning("[{ServerName}] Server info fetched successfully but build version was missing or invalid.", serverConfig.Name);
+                _logger.LogWarning("Server info fetched successfully but build version was missing or invalid.");
                 return null;
             }
 
-            _logger.LogInformation("[{ServerName}] Successfully fetched current build version: {Version}", serverConfig.Name, serverInfo.Build.Version);
+            _logger.LogInformation("Successfully fetched current build version: {Version}", serverInfo.Build.Version);
             return serverInfo.Build.Version;
         }
         catch (HttpRequestException httpEx) when (httpEx.InnerException is System.Net.Sockets.SocketException)
         {
-            _logger.LogError(httpEx, "[{ServerName}] Error fetching server info. Could not connect to {Url}. Is the server running and the address correct?", serverConfig.Name, url);
+            _logger.LogError(httpEx, "Error fetching server info. Could not connect to {Url}. Is the server running and the address correct?", url);
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ServerName}] Error fetching server info.", serverConfig.Name);
+            _logger.LogError(ex, "Error fetching server info.");
             return null;
         }
     }
@@ -93,13 +91,13 @@ public class Ss14ApiService
     {
         if (string.IsNullOrEmpty(watchdogToken))
         {
-            _logger.LogError("[{ServerName}] Cannot send update command without a watchdog token.", serverConfig.Name);
+            _logger.LogError("Cannot send update command without a watchdog token.");
             return false;
         }
 
         var client = _httpClientFactory.CreateClient("Ss14Api");
         var url = serverConfig.GetServerApiUrl("update");
-        _logger.LogInformation("[{ServerName}] Sending update notification to: {Url}", serverConfig.Name, url);
+        _logger.LogInformation("Sending update notification to: {Url}", url);
 
         try
         {
@@ -111,17 +109,16 @@ public class Ss14ApiService
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("[{ServerName}] Failed to send update command. Status: {StatusCode}. Response: {ErrorContent}",
-                    serverConfig.Name, response.StatusCode, errorContent);
+                _logger.LogError("Failed to send update command. Status: {StatusCode}. Response: {ErrorContent}", response.StatusCode, errorContent);
                 return false;
             }
 
-            _logger.LogInformation("[{ServerName}] Update command sent successfully to SS14 server.", serverConfig.Name);
+            _logger.LogInformation("Update command sent successfully to SS14 server.");
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ServerName}] Error sending update command to SS14 server.", serverConfig.Name);
+            _logger.LogError(ex, "Error sending update command to SS14 server.");
             return false;
         }
     }

@@ -2,27 +2,37 @@ using PteroUpdateMonitor.Models;
 using PteroUpdateMonitor.Services;
 using PteroUpdateMonitor.Workers;
 using System.Net.Http.Headers;
+using Serilog;
+using Serilog.Events;
+using PteroUpdateMonitor.Logging;
 
-var host = Host.CreateDefaultBuilder(args)
-    .ConfigureAppConfiguration((context, config) =>
-    {
-        config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-        config.AddEnvironmentVariables();
-        config.AddCommandLine(args);
-    })
-    .ConfigureLogging((context, logging) =>
-    {
-        logging.ClearProviders();
-        logging.AddConfiguration(context.Configuration.GetSection("Logging"));
-        logging.AddSimpleConsole(options =>
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
+    .Enrich.FromLogContext()
+    .WriteTo.Console()
+    .CreateBootstrapLogger();
+
+try
+{
+    Log.Information("Starting application host");
+
+    var host = Host.CreateDefaultBuilder(args)
+        .ConfigureAppConfiguration((context, config) =>
         {
-            options.IncludeScopes = true;
-            options.SingleLine = true;
-            options.TimestampFormat = "HH:mm:ss ";
-            options.UseUtcTimestamp = false;
-        });
-    })
-    .ConfigureServices((hostContext, services) =>
+            config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            config.AddEnvironmentVariables();
+            config.AddCommandLine(args);
+        })
+        .UseSerilog((context, services, loggerConfiguration) => loggerConfiguration
+            .ReadFrom.Configuration(context.Configuration)
+            .ReadFrom.Services(services)
+            .Enrich.FromLogContext()
+            .Enrich.WithColoredServerName()
+            .WriteTo.Console(outputTemplate:
+                "{Timestamp:HH:mm:ss} {ColoredServerName} {Message:lj}{NewLine}{Exception}")
+        )
+        .ConfigureServices((hostContext, services) =>
     {
         var appSettings = hostContext.Configuration.Get<AppSettings>() ?? new AppSettings();
         if (appSettings.Servers == null || !appSettings.Servers.Any())
@@ -73,4 +83,14 @@ var host = Host.CreateDefaultBuilder(args)
     })
     .Build();
 
-await host.RunAsync();
+    await host.RunAsync();
+
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "Application host terminated unexpectedly");
+}
+finally
+{
+    Log.CloseAndFlush();
+}

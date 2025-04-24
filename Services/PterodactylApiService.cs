@@ -34,7 +34,7 @@ public class PterodactylApiService
         var encodedFilePath = Uri.EscapeDataString("/datadir/server_config.toml");
         var url = serverConfig.GetPterodactylApiUrl($"files/contents?file={encodedFilePath}");
 
-        _logger.LogDebug("[{ServerName}] Fetching watchdog token from: {Url}", serverConfig.Name, url);
+        _logger.LogDebug("Fetching watchdog token from: {Url}", url);
 
         try
         {
@@ -43,8 +43,7 @@ public class PterodactylApiService
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("[{ServerName}] Failed to fetch server_config.toml. Status: {StatusCode}. Response: {ErrorContent}",
-                    serverConfig.Name, response.StatusCode, errorContent);
+                _logger.LogError("Failed to fetch server_config.toml. Status: {StatusCode}. Response: {ErrorContent}", response.StatusCode, errorContent);
                 return null;
             }
 
@@ -55,16 +54,16 @@ public class PterodactylApiService
             if (model.TryGetValue("watchdog", out var watchdogTable) && watchdogTable is TomlTable watchdogTomlTable &&
                 watchdogTomlTable.TryGetValue("token", out var tokenValue) && tokenValue is string token)
             {
-                _logger.LogInformation("[{ServerName}] Successfully retrieved watchdog token.", serverConfig.Name);
+                _logger.LogInformation("Successfully retrieved watchdog token.");
                 return token.Trim('"');
             }
 
-            _logger.LogWarning("[{ServerName}] Could not find 'Watchdog.token' in server_config.toml.", serverConfig.Name);
+            _logger.LogWarning("Could not find 'Watchdog.token' in server_config.toml.");
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ServerName}] Error fetching or parsing watchdog token from Pterodactyl API.", serverConfig.Name);
+            _logger.LogError(ex, "Error fetching or parsing watchdog token from Pterodactyl API.");
             return null;
         }
     }
@@ -73,7 +72,7 @@ public class PterodactylApiService
     {
         var client = CreateClient(serverConfig);
         var url = serverConfig.GetPterodactylApiUrl("websocket");
-        _logger.LogDebug("[{ServerName}] Fetching WebSocket info from: {Url}", serverConfig.Name, url);
+        _logger.LogDebug("Fetching WebSocket info from: {Url}", url);
 
         try
         {
@@ -82,24 +81,23 @@ public class PterodactylApiService
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("[{ServerName}] Failed to fetch WebSocket info. Status: {StatusCode}. Response: {ErrorContent}",
-                    serverConfig.Name, response.StatusCode, errorContent);
+                _logger.LogError("Failed to fetch WebSocket info. Status: {StatusCode}. Response: {ErrorContent}", response.StatusCode, errorContent);
                 return null;
             }
 
             var wsData = await response.Content.ReadFromJsonAsync<PteroWebSocketData>(cancellationToken: cancellationToken);
             if (wsData?.Data == null || string.IsNullOrEmpty(wsData.Data.Token) || string.IsNullOrEmpty(wsData.Data.SocketUrl))
             {
-                _logger.LogError("[{ServerName}] Received invalid WebSocket info from Pterodactyl API.", serverConfig.Name);
+                _logger.LogError("Received invalid WebSocket info from Pterodactyl API.");
                 return null;
             }
 
-            _logger.LogInformation("[{ServerName}] Successfully retrieved WebSocket info.", serverConfig.Name);
+            _logger.LogInformation("Successfully retrieved WebSocket info.");
             return wsData.Data;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ServerName}] Error fetching WebSocket info from Pterodactyl API.", serverConfig.Name);
+            _logger.LogError(ex, "Error fetching WebSocket info from Pterodactyl API.");
             return null;
         }
     }
@@ -108,7 +106,7 @@ public class PterodactylApiService
     {
         if (string.IsNullOrWhiteSpace(signal) || !new[] { "start", "stop", "restart", "kill" }.Contains(signal.ToLower()))
         {
-            _logger.LogError("[{ServerName}] Invalid power signal specified: {Signal}", serverConfig.Name, signal);
+            _logger.LogError("Invalid power signal specified: {Signal}", signal);
             return false;
         }
 
@@ -116,7 +114,7 @@ public class PterodactylApiService
         var url = serverConfig.GetPterodactylApiUrl("power");
         var payload = new { signal = signal.ToLower() };
 
-        _logger.LogInformation("[{ServerName}] Sending power signal '{Signal}' to: {Url}", serverConfig.Name, signal, url);
+        _logger.LogInformation("Sending power signal '{Signal}' to: {Url}", signal, url);
 
         try
         {
@@ -125,17 +123,16 @@ public class PterodactylApiService
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("[{ServerName}] Failed to send power signal '{Signal}'. Status: {StatusCode}. Response: {ErrorContent}",
-                    serverConfig.Name, signal, response.StatusCode, errorContent);
+                _logger.LogError("Failed to send power signal '{Signal}'. Status: {StatusCode}. Response: {ErrorContent}", signal, response.StatusCode, errorContent);
                 return false;
             }
 
-            _logger.LogInformation("[{ServerName}] Power signal '{Signal}' sent successfully.", serverConfig.Name, signal);
+            _logger.LogInformation("Power signal '{Signal}' sent successfully.", signal);
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ServerName}] Error sending power signal '{Signal}' to Pterodactyl API.", serverConfig.Name, signal);
+            _logger.LogError(ex, "Error sending power signal '{Signal}' to Pterodactyl API.", signal);
             return false;
         }
     }
@@ -144,7 +141,7 @@ public class PterodactylApiService
     {
         var client = CreateClient(serverConfig);
         var url = serverConfig.GetPterodactylApiUrl("settings/reinstall");
-        _logger.LogInformation("[{ServerName}] Sending reinstall command to: {Url}", serverConfig.Name, url);
+        _logger.LogInformation("Sending reinstall command to: {Url}", url);
 
         try
         {
@@ -154,17 +151,16 @@ public class PterodactylApiService
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError("[{ServerName}] Failed to send reinstall command. Status: {StatusCode}. Response: {ErrorContent}",
-                    serverConfig.Name, response.StatusCode, errorContent);
+                _logger.LogError("Failed to send reinstall command. Status: {StatusCode}. Response: {ErrorContent}", response.StatusCode, errorContent);
                 return false;
             }
 
-            _logger.LogInformation("[{ServerName}] Reinstall command sent successfully.", serverConfig.Name);
+            _logger.LogInformation("Reinstall command sent successfully.");
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[{ServerName}] Error sending reinstall command to Pterodactyl API.", serverConfig.Name);
+            _logger.LogError(ex, "Error sending reinstall command to Pterodactyl API.");
             return false;
         }
     }

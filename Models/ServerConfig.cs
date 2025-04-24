@@ -11,7 +11,7 @@ public class ServerConfig
     public int CheckIntervalSeconds { get; set; } = 3600;
     public string? DiscordWebhookUrl { get; set; }
     public string DiscordUpdateMessage { get; set; } = "Server '{ServerName}' is updating!";
-
+    public string? LogColor { get; set; }
 
     public string GetServerApiUrl(string endpoint) => EnsureTrailingSlash(ServerIp) + endpoint;
     public string GetPterodactylApiUrl(string endpoint) => EnsureTrailingSlash(PterodactylApiUrl) + $"api/client/servers/{PterodactylServerId}/{endpoint}";
