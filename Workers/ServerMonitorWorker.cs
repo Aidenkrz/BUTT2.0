@@ -330,7 +330,7 @@ public class ServerMonitorWorker : BackgroundService
         {
             _logger.LogInformation("Starting post-update sequence...");
 
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
 
             _logger.LogInformation("Sending KILL signal...");
             if (!await _pteroApiService.SendPowerSignalAsync(_serverConfig, "kill", stoppingToken))
@@ -338,7 +338,7 @@ public class ServerMonitorWorker : BackgroundService
                 _logger.LogError("Failed to send KILL signal. Aborting sequence.");
                 return;
             }
-            await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
 
             _logger.LogInformation("Sending REINSTALL command...");
             if (!await _pteroApiService.SendReinstallCommandAsync(_serverConfig, stoppingToken))
@@ -347,7 +347,7 @@ public class ServerMonitorWorker : BackgroundService
                 return;
             }
             _logger.LogInformation("Waiting for reinstall process to complete (15 seconds)...");
-            await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
 
             _logger.LogInformation("Sending START signal...");
             if (!await _pteroApiService.SendPowerSignalAsync(_serverConfig, "start", stoppingToken))
