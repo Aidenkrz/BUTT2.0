@@ -23,6 +23,7 @@ public class ServerMonitorWorker : BackgroundService
 
     private bool _isUpdateInProgress = false;
     private TaskCompletionSource<bool>? _updateCompletionSource;
+    private bool _postUpdateSequenceStarted = false;
 
     public ServerMonitorWorker(
         ILogger<ServerMonitorWorker> logger,
@@ -138,6 +139,7 @@ public class ServerMonitorWorker : BackgroundService
              currentBuildId, latestBuildId);
 
         _isUpdateInProgress = true;
+        _postUpdateSequenceStarted = false;
         _updateCompletionSource = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         try
@@ -185,6 +187,7 @@ public class ServerMonitorWorker : BackgroundService
         finally
         {
             _isUpdateInProgress = false;
+            _postUpdateSequenceStarted = false;
             await CleanupWebSocketAsync();
             _updateCompletionSource = null;
              _logger.LogInformation("Update process finished.");
@@ -269,10 +272,15 @@ public class ServerMonitorWorker : BackgroundService
                 case "status":
                     var status = pteroMessage.Args?.FirstOrDefault() ?? "unknown";
                     _logger.LogInformation("Server status update: {Status}", status);
-                    if (status == "starting" && _isUpdateInProgress)
+                    if (status == "starting" && _isUpdateInProgress && !_postUpdateSequenceStarted)
                     {
                         _logger.LogWarning("Server is 'starting'. Initiating post-update sequence (kill -> reinstall -> start).");
+                        _postUpdateSequenceStarted = true;
                         _ = Task.Run(() => PerformPostUpdateSequence(stoppingToken), stoppingToken);
+                    }
+                    else if (status == "starting" && _isUpdateInProgress && _postUpdateSequenceStarted)
+                    {
+                         _logger.LogInformation("Server is 'starting', but post-update sequence already initiated. Ignoring.");
                     }
                     break;
 
